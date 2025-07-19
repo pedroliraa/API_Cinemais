@@ -1,5 +1,4 @@
 import fastify from 'fastify'
-export default buildApp
 
 function buildApp(){
     
@@ -10,3 +9,5 @@ function buildApp(){
     return app;
 
 }
+
+export default buildApp
