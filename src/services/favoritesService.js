@@ -1,32 +1,62 @@
-import { addFavorite, removeFavorite, getUserFavorites, getMedias } from "../db/memoryDB.js";
+import Favorite from '../models/Favorites.js'
+import { getMediasCatalogo } from './mediaService.js'
 
-//adiciona novo mediaId ao favorites do user
 export async function addFavoriteServ(userId, mediaId) {
 
-    validaFavorite(userId, mediaId)
-    addFavorite(userId, mediaId)
+    await validaFavorite(userId, mediaId)
 
-    return getUserFavorites(userId)
+    //Checa se já existe o favorito para não duplicar 
+    const exists = await Favorite.findOne({ userId, mediaId })
+
+    if (!exists) {
+
+        await Favorite.create({ userId, mediaId })
+    }
+
+    return getUserFavoritesServ(userId)
 }
 
-//remove favorito
 export async function removeFavoriteServ(userId, mediaId) {
 
-    validaFavorite(userId, mediaId, false)
-    removeFavorite(userId, mediaId)
+    await validaFavorite(userId, mediaId, false)
 
-    return getUserFavorites(userId)
+    await Favorite.deleteOne({ userId, mediaId })
+
+    return getUserFavoritesServ(userId)
 }
 
-//pega toda lista de favoritos do user
 export async function getUserFavoritesServ(userId) {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+        throw new Error("Por favor, o campo 'userId' é obrigatório e deve ser no formato texto")
+    }
 
-    validaFavorite(userId)
-    return getUserFavorites(userId)
+    const favorites = await Favorite.aggregate([
+        { $match: { userId } },
+        {
+            $lookup: {
+                from: 'media',
+                localField: 'mediaId',
+                foreignField: '_id',
+                as: 'mediaInfo'
+            }
+        },
+        { $unwind: '$mediaInfo' },
+        {
+            $project: {
+                _id: 1,                  // ID do favorito
+                title: '$mediaInfo.title',
+                description: '$mediaInfo.description',
+                type: '$mediaInfo.type',
+                releaseYear: '$mediaInfo.releaseYear',
+                genre: '$mediaInfo.genre'
+            }
+        }
+    ])
 
+    return favorites
 }
 
-function validaFavorite(userId, mediaId = undefined, checarExistencia = true) {
+async function validaFavorite(userId, mediaId = undefined, checarExistencia = true) {
 
     if (!userId || typeof userId !== 'string' || userId.trim() === '') {
 
@@ -42,8 +72,10 @@ function validaFavorite(userId, mediaId = undefined, checarExistencia = true) {
 
         if (checarExistencia) {
 
-            const catalogo = getMedias()
-            const mediaExiste = catalogo.some(media => media.id === mediaId)
+            // Aqui consultamos o catálogo de mídias no mongo
+
+            const catalogo = await getMediasCatalogo()
+            const mediaExiste = catalogo.some(media => media._id.toString() === mediaId)
 
             if (!mediaExiste) {
 
