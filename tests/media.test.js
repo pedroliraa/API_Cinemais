@@ -239,7 +239,3 @@ describe('MediaService', () => {
 })
 
 //--------------TESTES DO MEDIA SERVICE----------------//
-
-//----------------TESTES DO FAVORITES-----------------//
-
-//----------------TESTES DO FAVORITES-----------------//

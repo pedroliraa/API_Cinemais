@@ -9,14 +9,16 @@ export async function addFavoriteServ(userId, mediaId) {
     return getUserFavorites(userId)
 }
 
+//remove favorito
 export async function removeFavoriteServ(userId, mediaId) {
 
-    validaFavorite(userId, mediaId)
+    validaFavorite(userId, mediaId, false)
     removeFavorite(userId, mediaId)
 
     return getUserFavorites(userId)
 }
 
+//pega toda lista de favoritos do user
 export async function getUserFavoritesServ(userId) {
 
     validaFavorite(userId)
@@ -24,22 +26,29 @@ export async function getUserFavoritesServ(userId) {
 
 }
 
-function validaFavorite(userId, mediaId = null) {
+function validaFavorite(userId, mediaId = undefined, checarExistencia = true) {
 
     if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-        throw new Error("Por favor, o campo 'userId' é obrigatório e deve ser no formato texto");
+
+        throw new Error("Por favor, o campo 'userId' é obrigatório e deve ser no formato texto")
     }
 
-    if (mediaId !== null) {
+    if (mediaId !== undefined) {
+
         if (!mediaId || typeof mediaId !== 'string' || mediaId.trim() === '') {
-            throw new Error("Por favor, o campo 'mediaId' é obrigatório e deve ser no formato texto");
+
+            throw new Error("Por favor, o campo 'mediaId' é obrigatório e deve ser no formato texto")
         }
 
-        const catalogo = getMedias();
-        const mediaExiste = catalogo.some(media => media.id === mediaId);
+        if (checarExistencia) {
 
-        if (!mediaExiste) {
-            throw new Error(`A media com id '${mediaId}' não existe no catálogo`);
+            const catalogo = getMedias()
+            const mediaExiste = catalogo.some(media => media.id === mediaId)
+
+            if (!mediaExiste) {
+
+                throw new Error(`A media com id '${mediaId}' não existe no catálogo`)
+            }
         }
     }
 }
