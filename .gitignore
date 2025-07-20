@@ -1,5 +1,5 @@
 node_modules
 .env
 coverage
-temp-memory-medias-test.mjs
-temp-memory-favs-test.mjs
+tmp-memory-medias-test.mjs
+tmp-memory-favs-test.mjs
