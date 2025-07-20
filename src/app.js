@@ -1,5 +1,5 @@
 import fastify from 'fastify'
-import mediaRoutes from './routes/routes.js';
+import { mediaRoutes, favoritesRoutes } from './routes/routes.js';
 
 function buildApp() {
 
@@ -8,6 +8,7 @@ function buildApp() {
     app.get('/health', async () => ({ status: 'ok' })) //teste para ver se o servidor esta no ar
 
     app.register(mediaRoutes) //rotas de media
+    app.register(favoritesRoutes) //rotas de favorites
 
     return app;
 

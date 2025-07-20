@@ -3,3 +3,4 @@ node_modules
 coverage
 tmp-memory-medias-test.mjs
 tmp-memory-favs-test.mjs
+tmp-memory-test.mjs

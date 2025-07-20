@@ -1,6 +1,6 @@
 import { createNewMedia, getMediabyID, getMediasCatalogo } from "../services/mediaService.js"
 
-//função do controller para criar nova media
+//função do controller para criar nova media (POST /media)
 export async function createMediaC(request, reply) {
 
     let {
@@ -28,7 +28,7 @@ export async function createMediaC(request, reply) {
     }
 }
 
-
+//pegar todas as medias (GET /media)
 export async function getMediasC(request, reply) {
 
     try {
@@ -46,7 +46,7 @@ export async function getMediasC(request, reply) {
 }
 
 
-//pegar todas as medias do catálogo
+//pegar media por Id (GET /media/{id})
 export async function getMediasByIdC(request, reply) {
 
     const { id } = request.params
