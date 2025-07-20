@@ -8,3 +8,4 @@ npm start
 # ou
 node src/index.js
 
+Docker e Mongo adicionados

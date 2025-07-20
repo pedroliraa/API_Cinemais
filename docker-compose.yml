@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URI: "mongodb://root:example@mongo:27017/cinemais?authSource=admin"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo-data:
