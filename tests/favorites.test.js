@@ -1,113 +1,257 @@
-import { addFavoriteServ, removeFavoriteServ, getUserFavoritesServ } from "../src/services/favoritesService.js"
-import { resetFavorites, resetMedias, insereMedia } from "../src/db/memoryDB.js"
+import mongoose from 'mongoose'
+import { MongoMemoryServer } from 'mongodb-memory-server'
+import * as mediaService from '../src/services/mediaService.js'
+import MediaModel from '../src/models/Media.js'
 
-describe('FavoritesService', () => {
+let mongoServer
 
-    //inserindo medias para os testes
-    beforeEach(() => {
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create()
+  const uri = mongoServer.getUri()
+  await mongoose.connect(uri)
+})
 
-        //garantindo que esteja tudo limpo
-        resetFavorites()
-        resetMedias()
+afterEach(async () => {
+  await MediaModel.deleteMany()
+})
 
-        insereMedia({
-            id: '1',
-            title: 'Titanic',
-            description: 'Filme de época sobre navio naufragado',
-            type: 'movie',
-            releaseYear: 1997,
-            genre: 'Romance de época'
-        })
+afterAll(async () => {
+  await mongoose.disconnect()
+  await mongoServer.stop()
+})
 
-        insereMedia({
-            id: '2',
-            title: 'Sandman',
-            description: 'Série baseada nos quadrinhos de mesmo nome',
-            type: 'series',
-            releaseYear: 2022,
-            genre: 'Ficção'
-        })
+describe('MediaService com MongoDB em memória', () => {
+
+  beforeEach(async () => {
+    await MediaModel.insertMany([
+      {
+        title: 'Sandman',
+        description: 'Série mística sobre o Endless Dream',
+        type: 'series',
+        releaseYear: 2022,
+        genre: 'Ficção'
+      },
+      {
+        title: 'Luca',
+        description: 'Filme sobre uma criança marítima descobrindo um novo mundo na superfície',
+        type: 'movie',
+        releaseYear: 2021,
+        genre: 'Animação'
+      }
+    ])
+  })
+
+  // ----- Testes de criação -----
+  describe('createNewMedia', () => {
+
+    it('cria uma media com sucesso', async () => {
+      const media = {
+        title: "O curioso caso de Benjamim Button",
+        description: 'Um homem que nasceu velho e fica novo a medida que os anos passam',
+        type: 'movie',
+        releaseYear: 2008,
+        genre: 'Drama'
+      }
+      const result = await mediaService.createNewMedia(media)
+      expect(result).toHaveProperty('_id')
+      expect(result.title).toBe(media.title)
+
+      const catalogo = await mediaService.getMediasCatalogo()
+      expect(catalogo).toHaveLength(3)
     })
 
-    //-----------Adição de Favorito----------//
-    describe('addFavoriteServ', () => {
-
-        it('adiciona um favorito corretamente', async () => {
-            const result = await addFavoriteServ('user1', '1')
-            expect(result).toHaveLength(1)
-            expect(result[0].id).toBe('1')
-        })
-
-        it('adiciona múltiplos favoritos para o mesmo usuário', async () => {
-            await addFavoriteServ('user1', '1')
-            const result = await addFavoriteServ('user1', '2')
-            expect(result).toHaveLength(2)
-            expect(result.map(m => m.id)).toEqual(expect.arrayContaining(['1', '2']))
-        })
-
-        //--------Campos Obrigatórios-----------//
-        it('lança erro se userId não for string válida', async () => {
-            await expect(addFavoriteServ('', '1')).rejects.toThrow(/userId/)
-            await expect(addFavoriteServ(null, '1')).rejects.toThrow(/userId/)
-        })
-
-        it('lança erro se mediaId não for string válida', async () => {
-            await expect(addFavoriteServ('user1', '')).rejects.toThrow(/mediaId/)
-            await expect(addFavoriteServ('user1', null)).rejects.toThrow(/mediaId/)
-        })
-
-        //Valida se existe
-        it('lança erro se mediaId não existir no catálogo', async () => {
-            await expect(addFavoriteServ('user1', '999')).rejects.toThrow(/não existe/)
-        })
-
+    // Validações de campos obrigatórios
+    it('falha se o título estiver vazio', async () => {
+      const media = {
+        title: '',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: 2001,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/Título/)
     })
 
-    //--------Teste Pega favoritos----------//
-    describe('getUserFavoritesServ', () => {
-
-        it('retorna favoritos do usuário', async () => {
-            await addFavoriteServ('user1', '1')
-            await addFavoriteServ('user1', '2')
-            const favorites = await getUserFavoritesServ('user1')
-            expect(favorites).toHaveLength(2)
-            expect(favorites[0]).toHaveProperty('id')
-        })
-
-        //------Campos obrigatórios/inválidos-----------//
-        it('retorna array vazio se usuário não tiver favoritos', async () => {
-            const favorites = await getUserFavoritesServ('user2')
-            expect(favorites).toEqual([])
-        })
-
-        it('lança erro se userId inválido', async () => {
-            await expect(getUserFavoritesServ('')).rejects.toThrow(/userId/)
-        })
+    it('falha se a descrição estiver vazia', async () => {
+      const media = {
+        title: 'Título válido',
+        description: '',
+        type: 'movie',
+        releaseYear: 2001,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/Descrição/)
     })
 
-    //-----------Teste remoção Favorito--------//
-    describe('removeFavoriteServ', () => {
-
-        it('remove favorito corretamente', async () => {
-            await addFavoriteServ('user1', '1')
-            const afterAdd = await getUserFavoritesServ('user1')
-            expect(afterAdd).toHaveLength(1)
-
-            const afterRemove = await removeFavoriteServ('user1', '1')
-            expect(afterRemove).toEqual([])
-        })
-
-        //Valida campos e existência
-        it('não lança erro ao tentar remover favorito inexistente', async () => {
-            await addFavoriteServ('user1', '1')
-            const result = await removeFavoriteServ('user1', '999')
-            expect(result).toHaveLength(1)  // permanece o favorito existente
-        })
-
-        it('lança erro se userId ou mediaId inválidos', async () => {
-            await expect(removeFavoriteServ('', '1')).rejects.toThrow(/userId/)
-            await expect(removeFavoriteServ('user1', '')).rejects.toThrow(/mediaId/)
-        })
+    it('falha se o gênero estiver vazio', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: 2001,
+        genre: ''
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/Gênero/)
     })
 
+    it('falha se o tipo estiver vazio', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: '',
+        releaseYear: 2001,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/Tipo/)
+    })
+
+    it('falha se o tipo for inválido', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'documentary',
+        releaseYear: 2001,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/Tipo/)
+    })
+
+    it('falha se o ano de lançamento for indefinido', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: undefined,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/ano/i)
+    })
+
+    it('falha se o ano de lançamento for null', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: null,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/ano/i)
+    })
+
+    it('falha se o ano for menor que 1900', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: 1800,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/ano/i)
+    })
+
+    it('falha se o ano for maior que o ano atual', async () => {
+      const futureYear = new Date().getFullYear() + 1
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: futureYear,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/ano/i)
+    })
+
+    it('falha se o ano for decimal', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: 2020.5,
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/ano/i)
+    })
+
+    it('falha se o ano vier como string', async () => {
+      // @ts-ignore
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: "2008",
+        genre: 'Ação'
+      }
+      await expect(mediaService.createNewMedia(media)).rejects.toThrow(/ano/i)
+    })
+
+    // Testes limites válidos
+    it('aceita o ano 1900 (limite inferior)', async () => {
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: 1900,
+        genre: 'Ação'
+      }
+      const result = await mediaService.createNewMedia(media)
+      expect(result.releaseYear).toBe(1900)
+    })
+
+    it('aceita o ano atual (limite superior)', async () => {
+      const currentYear = new Date().getFullYear()
+      const media = {
+        title: 'Título válido',
+        description: 'Descrição válida',
+        type: 'movie',
+        releaseYear: currentYear,
+        genre: 'Ação'
+      }
+      const result = await mediaService.createNewMedia(media)
+      expect(result.releaseYear).toBe(currentYear)
+    })
+
+  })
+
+  // ----- Testes de leitura -----
+  describe('getMediasCatalogo', () => {
+    it('retorna todas as mídias seedadas', async () => {
+      const medias = await mediaService.getMediasCatalogo()
+      expect(medias).toHaveLength(2)
+      expect(medias[0]).toHaveProperty('title')
+    })
+
+    it('retorna novas mídias após criação', async () => {
+      await mediaService.createNewMedia({
+        title: "Nova media 1",
+        description: "desc 1",
+        type: "movie",
+        releaseYear: 2010,
+        genre: "Ação"
+      })
+      await mediaService.createNewMedia({
+        title: "Nova media 2",
+        description: "desc 2",
+        type: "series",
+        releaseYear: 2015,
+        genre: "Drama"
+      })
+      const medias = await mediaService.getMediasCatalogo()
+      expect(medias).toHaveLength(4) // 2 seeds + 2 criadas
+    })
+  })
+
+  describe('getMediabyID', () => {
+    it('retorna mídia correta pelo id', async () => {
+      const sandman = await MediaModel.findOne({ title: 'Sandman' })
+      const found = await mediaService.getMediabyID(sandman._id)
+      expect(found).not.toBeNull()
+      expect(found.title).toBe('Sandman')
+    })
+
+    it('retorna null para id inexistente', async () => {
+      const fakeId = new mongoose.Types.ObjectId()
+      const found = await mediaService.getMediabyID(fakeId)
+      expect(found).toBeNull()
+    })
+  })
 })
