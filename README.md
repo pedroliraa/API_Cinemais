@@ -18,6 +18,7 @@ Ela foi construída utilizando **Node.js**, na linguagem **JavaScript**, com o f
 ## Banco de Dados
 
 Utilizei **MongoDB** (com Mongoose) pois:
+
 - É um banco de dados não-relacional, ideal para dados flexíveis.
 - A integração com Node.js via Mongoose é prática e robusta.
 - Fácil containerização com Docker.
@@ -35,17 +36,17 @@ Utilizei **MongoDB** (com Mongoose) pois:
 ## Estrutura do Projeto
 
 src/
-   controllers/      # Controladores de rotas
-   models/           # Modelos Mongoose (Media, Favorite)
-   routes/           # Rotas da API
-   services/         # Lógica de negócio (MediaService, FavoritesService)
-   index.js          # Entrada principal da API
-   app.js            # Instancia e configura o servidor
-tests/               # Testes com Jest
-Dockerfile           # Configuração do container da aplicação
-docker-compose.yml   # Orquestração com MongoDB
-package.json         # Configurações e dependências do projeto
-README.md            # Documentação do projeto
+controllers/ # Controladores de rotas
+models/ # Modelos Mongoose (Media, Favorite)
+routes/ # Rotas da API
+services/ # Lógica de negócio (MediaService, FavoritesService)
+index.js # Entrada principal da API
+app.js # Instancia e configura o servidor
+tests/ # Testes com Jest
+Dockerfile # Configuração do container da aplicação
+docker-compose.yml # Orquestração com MongoDB
+package.json # Configurações e dependências do projeto
+README.md # Documentação do projeto
 
 ## Como Executar
 
@@ -61,6 +62,7 @@ npm install
 ```
 
 ---
+
 #### Executar com Docker (recomendado)
 
 ```powershell
@@ -81,6 +83,7 @@ PORT=3000
 ```
 
 E então executar:
+
 ```powershell
 npm start
 ```
@@ -112,7 +115,7 @@ npm test
   "type": "movie",
   "releaseYear": 1997,
   "genre": "Romance de época"
-}'   
+}'
 ```
 
 #### GET /media
@@ -159,4 +162,26 @@ curl --request GET \
 curl --request DELETE \
   --url http://localhost:3000/users/user1/favorites/687d6c5e92b3d95f9c6eb2e1 \
   --header 'User-Agent: insomnia/11.2.0'
-  ```
+```
+
+---------------------------
+
+## Qualidade de código com ESLint e Prettier
+
+### Verificar problemas
+
+```
+npm run lint
+```
+
+### Corrigir automaticamente os problemas possíveis
+
+```
+npm run lint:fix
+```
+
+### Formatar todo o código com Prettier
+
+```
+npm run format
+```

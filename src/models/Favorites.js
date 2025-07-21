@@ -1,11 +1,15 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-const FavoriteSchema = new mongoose.Schema({
+const FavoriteSchema = new mongoose.Schema(
+  {
+    userId: { type: String, required: true },
+    mediaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Media',
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-  userId: { type: String, required: true },
-  mediaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Media', required: true }
-
-}, { timestamps: true })
-
-
-export default mongoose.model('Favorite', FavoriteSchema)
+export default mongoose.model('Favorite', FavoriteSchema);

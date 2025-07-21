@@ -1,19 +1,18 @@
-import mongoose from "mongoose"
+import mongoose from 'mongoose';
 
-const MediaSchema = new mongoose.Schema({
-
+const MediaSchema = new mongoose.Schema(
+  {
     title: { type: String, required: true },
     description: { type: String, required: true },
     type: {
-
-        type: String,
-        required: true,
-        enum: ['movie', 'series'], 
-        
+      type: String,
+      required: true,
+      enum: ['movie', 'series'],
     },
     releaseYear: { type: Number, required: true },
-    genre: { type: String, required: true }
+    genre: { type: String, required: true },
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true })
-
-export default mongoose.model('Media', MediaSchema)
+export default mongoose.model('Media', MediaSchema);
